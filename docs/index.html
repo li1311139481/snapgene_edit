@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>snapgene_edit — SnapGene .dna 文件编辑工具</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+      background: #f4f6f9;
+      color: #1a2a3a;
+      line-height: 1.7;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 260px;
+      height: 100vh;
+      overflow-y: auto;
+      background: #1e2a3a;
+      color: #c8d6e5;
+      padding: 32px 20px;
+      z-index: 10;
+    }
+    .sidebar h2 {
+      font-size: 17px;
+      color: #fff;
+      margin-bottom: 20px;
+      letter-spacing: 0.5px;
+    }
+    .sidebar h2 small { font-size: 12px; font-weight: 400; color: #8a9bb5; display: block; margin-top: 4px; }
+    .sidebar nav a {
+      display: block;
+      padding: 7px 12px;
+      color: #a0b4cc;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+    .sidebar nav a:hover { background: #2a3a4a; color: #fff; }
+    .sidebar nav a.active { background: #4a90d9; color: #fff; }
+    .sidebar .section-label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      color: #6a7f9f; margin: 18px 0 6px 12px; letter-spacing: 1px;
+    }
+
+    .main {
+      margin-left: 260px;
+      padding: 48px 56px 80px;
+      max-width: 960px;
+    }
+
+    h1 { font-size: 32px; color: #1a2a3a; margin-bottom: 8px; }
+    h1 .badge {
+      display: inline-block;
+      font-size: 13px; font-weight: 600;
+      background: #4a90d9; color: #fff;
+      padding: 2px 12px; border-radius: 20px;
+      vertical-align: middle; margin-left: 12px;
+    }
+    .subtitle { font-size: 16px; color: #6b7f97; margin-bottom: 40px; }
+    h2 {
+      font-size: 24px;
+      margin: 48px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e0e6ed;
+      color: #1a2a3a;
+    }
+    h3 { font-size: 18px; margin: 32px 0 12px; color: #2c3e50; }
+    h4 { font-size: 15px; margin: 24px 0 8px; color: #34495e; }
+    p, li { color: #3a4a5a; }
+    p { margin-bottom: 12px; }
+
+    code {
+      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+      font-size: 13px;
+      background: #eef2f7;
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: #c0392b;
+    }
+    pre {
+      background: #1e2a3a;
+      color: #e4eaf0;
+      padding: 18px 22px;
+      border-radius: 12px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.6;
+      margin: 16px 0;
+    }
+    pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+    pre .comment { color: #6a7f9f; }
+    pre .keyword { color: #e87de8; }
+    pre .string { color: #7ec699; }
+    pre .func { color: #66d9ef; }
+    pre .cls { color: #f8c555; }
+    pre .num { color: #f08d49; }
+    pre .param { color: #f2777a; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    th {
+      background: #e8ecf3;
+      text-align: left;
+      padding: 10px 14px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    td { padding: 10px 14px; border-bottom: 1px solid #e0e6ed; }
+    tr:hover td { background: #f8f9fb; }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      padding: 24px;
+      margin: 20px 0;
+    }
+    .card-title {
+      font-weight: 700;
+      font-size: 17px;
+      color: #2c3e50;
+      margin-bottom: 12px;
+    }
+    .card-title .tag {
+      display: inline-block;
+      font-size: 11px; font-weight: 600;
+      padding: 2px 10px; border-radius: 12px;
+      margin-left: 8px; vertical-align: middle;
+    }
+    .tag-class { background: #e8f0fe; color: #4a90d9; }
+    .tag-func  { background: #e6f7e6; color: #27ae60; }
+    .tag-model { background: #fef3e2; color: #e67e22; }
+
+    .callout {
+      padding: 14px 18px;
+      border-radius: 10px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    .callout-info { background: #eaf4fb; border-left: 4px solid #4a90d9; color: #2c5a7a; }
+    .callout-warn { background: #fef9e7; border-left: 4px solid #f39c12; color: #7a5a1a; }
+    .callout-tip  { background: #e8f8e8; border-left: 4px solid #27ae60; color: #1a5a2a; }
+
+    .method-list { list-style: none; }
+    .method-list li {
+      padding: 6px 0;
+      border-bottom: 1px solid #f0f2f5;
+    }
+    .method-list li:last-child { border: none; }
+    .method-sig {
+      font-family: "JetBrains Mono", "Fira Code", monospace;
+      font-size: 13px;
+      background: none;
+      color: #4a5a6a;
+    }
+    .method-sig .name { color: #4a90d9; font-weight: 600; }
+
+    .tabs { display: flex; gap: 4px; margin-bottom: 0; }
+    .tab-btn {
+      padding: 10px 22px;
+      border: none;
+      background: #e8ecf3;
+      border-radius: 10px 10px 0 0;
+      cursor: pointer;
+      font-size: 14px; font-weight: 600;
+      color: #6b7f97;
+      transition: all 0.15s;
+    }
+    .tab-btn:hover { background: #dce0e8; }
+    .tab-btn.active { background: #1e2a3a; color: #fff; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    @media (max-width: 900px) {
+      .sidebar { position: static; width: 100%; height: auto; }
+      .main { margin-left: 0; padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>snapgene_edit <small>v0.1.0</small></h2>
+  <nav>
+    <a href="#overview" class="active">概述</a>
+    <a href="#install">安装</a>
+
+    <div class="section-label">核心 API</div>
+    <a href="#SnapGeneEditor">SnapGeneEditor</a>
+    <a href="#coord-adjust">特征坐标自动调整</a>
+    <a href="#utils">工具函数</a>
+
+    <div class="section-label">数据模型</div>
+    <a href="#models">SnapGeneFile / Feature</a>
+
+    <div class="section-label">批量 sgRNA 编辑</div>
+    <a href="#batch-simple">batch_from_lists_simple</a>
+
+    <div class="section-label">配置</div>
+    <a href="#config">config.py</a>
+
+    <div class="section-label">示例</div>
+    <a href="#examples">完整示例</a>
+  </nav>
+</div>
+
+<div class="main">
+
+  <!-- ============================================================ -->
+  <!-- 概述 -->
+  <!-- ============================================================ -->
+  <section id="overview">
+    <h1>snapgene_edit <span class="badge">纯 Python</span></h1>
+    <p class="subtitle">读取、编辑和写入 SnapGene .dna 文件的纯 Python 库，无需 SnapGene 软件。</p>
+
+    <div class="callout callout-info">
+      <strong>零外部依赖</strong> — 仅使用 Python 标准库（struct、xml.etree.ElementTree 等），安装即用。
+    </div>
+
+    <h3>功能一览</h3>
+    <ul>
+      <li>📂 读取 SnapGene .dna 二进制文件 → <code>SnapGeneFile</code> 对象</li>
+      <li>✏️ 编辑序列（替换、插入、删除区域），<strong>特征坐标自动调整</strong></li>
+      <li>🏷️ 管理特征（添加、删除、重命名、修改坐标）</li>
+      <li>🧬 批量编辑 sgRNA 特征：替换序列 + 重命名，支持 A/B/C/G 四种荧光变体</li>
+      <li>💾 保持原始块顺序写入，最大兼容 SnapGene</li>
+    </ul>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 安装 -->
+  <!-- ============================================================ -->
+  <section id="install">
+    <h2>安装</h2>
+    <div class="card">
+      <pre><code><span class="comment"># 直接从 GitHub 安装（推荐）</span>
+pip install git+https://github.com/li1311139481/snapgene_edit.git
+
+<span class="comment"># 或先 clone 后以可编辑模式安装（修改源码即时生效）</span>
+git clone https://github.com/li1311139481/snapgene_edit.git
+pip install -e snapgene_edit</code></pre>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SnapGeneEditor -->
+  <!-- ============================================================ -->
+  <section id="SnapGeneEditor">
+    <h2>SnapGeneEditor — 核心编辑器</h2>
+    <p>最常用的入口类。支持打开现有 .dna 文件或从零创建。</p>
+
+    <div class="card">
+      <div class="card-title"><span class="tag tag-class">class</span> SnapGeneEditor</div>
+
+      <h4>构造</h4>
+      <pre><code><span class="comment"># 从已有文件加载</span>
+editor = SnapGeneEditor(<span class="string">"plasmid.dna"</span>)
+
+<span class="comment"># 从 SnapGeneFile 对象</span>
+editor = SnapGeneEditor(data=snapgene_file)
+
+<span class="comment"># 从零创建</span>
+editor = SnapGeneEditor()</code></pre>
+
+      <h4>属性</h4>
+      <table>
+        <tr><th>属性</th><th>类型</th><th>说明</th></tr>
+        <tr><td><code>name</code></td><td>str</td><td>质粒/序列名称（可读写）</td></tr>
+        <tr><td><code>sequence</code></td><td>str</td><td>DNA 序列（只读）</td></tr>
+        <tr><td><code>length</code></td><td>int</td><td>序列长度 (bp)</td></tr>
+        <tr><td><code>features</code></td><td>List[Feature]</td><td>特征列表</td></tr>
+        <tr><td><code>is_circular</code></td><td>bool</td><td>是否环状（可读写）</td></tr>
+      </table>
+
+      <h4>序列编辑方法</h4>
+      <ul class="method-list">
+        <li><span class="method-sig"><span class="name">replace_region</span>(start, end, new_seq)</span><div class="method-desc">替换指定区域（特征自动调整）</div></li>
+        <li><span class="method-sig"><span class="name">insert</span>(position, new_seq)</span><div class="method-desc">在指定位置插入序列</div></li>
+        <li><span class="method-sig"><span class="name">delete_region</span>(start, end)</span><div class="method-desc">删除指定区域</div></li>
+        <li><span class="method-sig"><span class="name">replace_sequence</span>(old_seq, new_seq, *, all=True)</span><div class="method-desc">按序列内容替换（全部或首次）</div></li>
+        <li><span class="method-sig"><span class="name">set_sequence</span>(seq)</span><div class="method-desc">替换整个序列（清空所有特征）</div></li>
+      </ul>
+
+      <h4>特征编辑方法</h4>
+      <ul class="method-list">
+        <li><span class="method-sig"><span class="name">add_feature</span>(name, start, end, *, feature_type, strand, color)</span><div class="method-desc">添加新特征</div></li>
+        <li><span class="method-sig"><span class="name">remove_feature</span>(name)</span><div class="method-desc">移除指定特征</div></li>
+        <li><span class="method-sig"><span class="name">rename_feature</span>(old_name, new_name)</span><div class="method-desc">重命名特征</div></li>
+        <li><span class="method-sig"><span class="name">update_feature_coords</span>(name, start, end)</span><div class="method-desc">手动更新特征坐标</div></li>
+        <li><span class="method-sig"><span class="name">find_feature</span>(name) → Feature | None</span><div class="method-desc">按名称查找特征</div></li>
+        <li><span class="method-sig"><span class="name">list_features</span>() → List[dict]</span><div class="method-desc">所有特征的摘要字典列表</div></li>
+        <li><span class="method-sig"><span class="name">replace_in_feature</span>(feature_name, new_seq) → bool</span><div class="method-desc">替换指定特征区域内的序列</div></li>
+        <li><span class="method-sig"><span class="name">insert_in_feature</span>(feature_name, new_seq, *, at)</span><div class="method-desc">在特征区域内插入序列</div></li>
+      </ul>
+
+      <h4>保存 / 重载</h4>
+      <ul class="method-list">
+        <li><span class="method-sig"><span class="name">save</span>(path)</span><div class="method-desc">保存到指定路径</div></li>
+        <li><span class="method-sig"><span class="name">save_overwrite</span>()</span><div class="method-desc">覆盖保存到原文件</div></li>
+        <li><span class="method-sig"><span class="name">reload</span>()</span><div class="method-desc">重新加载（丢弃未保存修改）</div></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 特征坐标自动调整 -->
+  <!-- ============================================================ -->
+  <section id="coord-adjust">
+    <h2>特征坐标自动调整</h2>
+    <p><code>replace_region</code>、<code>insert</code>、<code>delete_region</code> 方法在修改序列的同时会自动调整所有特征的坐标。</p>
+
+    <div class="card">
+      <div class="card-title">调整规则</div>
+      <table>
+        <tr><th>特征位置</th><th>处理方式</th></tr>
+        <tr><td>完全在编辑区域<strong>之前</strong></td><td><code>start</code> / <code>end</code> 不变</td></tr>
+        <tr><td>完全在编辑区域<strong>之后</strong></td><td><code>start</code> 和 <code>end</code> 同时加上长度增量 <code>len(new_seq) - old_len</code></td></tr>
+        <tr><td>完全在编辑区域<strong>之内</strong></td><td>序列完全改变，特征<strong>删除</strong></td></tr>
+        <tr><td><strong>部分重叠</strong></td><td>重叠部分删除；非重叠部分保留原名</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">示例</div>
+      <p>将位置 10-30（20bp）替换为 4bp 序列：</p>
+      <pre><code><span class="comment"># 编辑前: [sgRNA:10-30] [GeneA:25-40] [GeneB:50-80]
+# 替换后: [sgRNA:10-14] [GeneA:14-24] [GeneB:34-64]</span>
+
+editor.replace_region(<span class="num">10</span>, <span class="num">30</span>, <span class="string">"AAAA"</span>)</code></pre>
+      <p><code>GeneA[25-40]</code> 部分重叠，右半 [30-40) 存活 → 平移至 [14-24)<br>
+      <code>GeneB[50-80]</code> 完全在编辑区域后 → 平移 -16 → [34-64)</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 工具函数 -->
+  <!-- ============================================================ -->
+  <section id="utils">
+    <h2>工具函数</h2>
+    <table>
+      <tr><th>函数</th><th>说明</th></tr>
+      <tr><td><code>complement(seq)</code></td><td>互补序列（A↔T, C↔G）</td></tr>
+      <tr><td><code>reverse_complement(seq)</code></td><td>反向互补序列</td></tr>
+      <tr><td><code>guess_type(seq)</code></td><td>推断序列类型（"dna" / "rna" / "unknown"）</td></tr>
+      <tr><td><code>hex_color_to_int</code> / <code>int_to_hex_color</code></td><td>颜色格式互转</td></tr>
+    </table>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 数据模型 -->
+  <!-- ============================================================ -->
+  <section id="models">
+    <h2>数据模型</h2>
+
+    <div class="card">
+      <div class="card-title"><span class="tag tag-model">dataclass</span> SnapGeneFile</div>
+      <table>
+        <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+        <tr><td><code>name</code></td><td>str</td><td>文件名称</td></tr>
+        <tr><td><code>sequence</code></td><td>str</td><td>DNA 序列</td></tr>
+        <tr><td><code>features</code></td><td>List[Feature]</td><td>特征/注释列表</td></tr>
+        <tr><td><code>primers</code></td><td>List[Primer]</td><td>引物列表</td></tr>
+        <tr><td><code>notes</code></td><td>Dict</td><td>XML 注释</td></tr>
+        <tr><td><code>is_circular</code></td><td>bool</td><td>是否环状</td></tr>
+      </table>
+      <h4>方法</h4>
+      <ul class="method-list">
+        <li><span class="method-sig"><span class="name">add_feature</span>(feature) / <span class="name">remove_feature</span>(name) / <span class="name">find_feature</span>(name)</span></li>
+        <li><span class="method-sig"><span class="name">reverse_complement</span>() → SnapGeneFile</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="tag tag-model">dataclass</span> Feature</div>
+      <table>
+        <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+        <tr><td><code>name</code></td><td>str</td><td>特征名称</td></tr>
+        <tr><td><code>type</code></td><td>str</td><td>类型（CDS, gene, promoter, misc_feature...）</td></tr>
+        <tr><td><code>start</code></td><td>int</td><td>起始 (0-based)</td></tr>
+        <tr><td><code>end</code></td><td>int</td><td>结束 (exclusive)</td></tr>
+        <tr><td><code>strand</code></td><td>int</td><td>链方向 (1: 正向, -1: 反向, 0: 无)</td></tr>
+        <tr><td><code>color</code></td><td>str</td><td>颜色 (#RRGGBB)</td></tr>
+        <tr><td><code>segments</code></td><td>List[FeatureSegment]</td><td>段信息</td></tr>
+        <tr><td><code>qualifiers</code></td><td>Dict</td><td>额外限定符</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 批量 sgRNA 编辑 -->
+  <!-- ============================================================ -->
+  <section id="batch-simple">
+    <h2>批量 sgRNA 编辑</h2>
+    <p>专为 sgRNA 克隆设计的纯配置驱动接口。根据荧光标识自动选择模板文件，无需手动传 <code>src_file</code>。</p>
+    <p>核心流程：读取模板 → 找到名为 <code>sgRNA</code> 的特征 → 替换序列 → 重命名 → 保存 → 输出引物。</p>
+
+    <div class="card">
+      <div class="card-title"><span class="tag tag-func">function</span> batch_from_lists_simple(save_names, new_names, new_seqs, fluor_list, output_dir, fluor_files)</div>
+      <p>这是项目中<strong>唯一公开的批量接口</strong>，所有其他批量函数均已合并至此。</p>
+
+      <h4>参数</h4>
+      <table>
+        <tr><th>参数</th><th>类型</th><th>说明</th></tr>
+        <tr><td><code>save_names</code></td><td>List[str]</td><td>输出文件名（不含路径和 .dna 后缀）</td></tr>
+        <tr><td><code>new_names</code></td><td>List[str]</td><td>新的 <code>sgRNA</code> 特征名称</td></tr>
+        <tr><td><code>new_seqs</code></td><td>List[str]</td><td>新序列；写 <code>"FLUOR"</code> 自动使用对应荧光的原始 sgRNA 序列</td></tr>
+        <tr><td><code>fluor_list</code></td><td>List[str]</td><td>荧光标识（A / B / C / G），与 <code>new_seqs</code> 一一对应</td></tr>
+        <tr><td><code>output_dir</code></td><td>str</td><td>输出目录（默认为当前目录）</td></tr>
+        <tr><td><code>fluor_files</code></td><td>Dict[str, str]</td><td>自定义荧光→模板路径映射（默认使用 <code>config.py</code> 中的配置）</td></tr>
+      </table>
+
+      <h4>返回值</h4>
+      <p>返回一个字符串，包含处理日志和引物序列（正向 + 反向互补），可直接粘贴到 primer list。同时 <code>print()</code> 输出到控制台。</p>
+
+      <pre><code><span class="keyword">from</span> snapgene_edit <span class="keyword">import</span> batch_from_lists_simple
+
+result = batch_from_lists_simple(
+    save_names=[<span class="string">"ZFP001"</span>, <span class="string">"ZFP002"</span>, <span class="string">"ZFP003"</span>],
+    new_names=[<span class="string">"sgKlf2-1"</span>, <span class="string">"sgKlf2-2"</span>, <span class="string">"sgKlf2-3"</span>],
+    new_seqs=[<span class="string">"FLUOR"</span>, <span class="string">"FLUOR"</span>, <span class="string">"AAAAAAAAAAAAAAAAAAAA"</span>],
+    fluor_list=[<span class="string">"A"</span>, <span class="string">"B"</span>, <span class="string">"A"</span>],
+    output_dir=<span class="string">r"D:\plasmid\temp"</span>,
+)
+<span class="keyword">print</span>(result)</code></pre>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 配置 -->
+  <!-- ============================================================ -->
+  <section id="config">
+    <h2>配置 — config.py</h2>
+    <p>荧光模板文件的路径映射。修改此文件即可更新模板路径，无需修改代码。</p>
+    <pre><code><span class="comment"># snapgene_edit/config.py</span>
+FLUORESCENT_FILES = {
+    <span class="string">"A"</span>: <span class="string">"D:/plasmid/LMA模板.dna"</span>,
+    <span class="string">"B"</span>: <span class="string">"D:/plasmid/LMB模板.dna"</span>,
+    <span class="string">"C"</span>: <span class="string">"D:/plasmid/LMC模板.dna"</span>,
+    <span class="string">"G"</span>: <span class="string">"D:/plasmid/LMG模板.dna"</span>,
+}</code></pre>
+    <div class="callout callout-warn">
+      <strong>要求：</strong>每个模板 .dna 文件中必须包含一个名为 <code>sgRNA</code> 的特征。<code>batch_from_lists_simple</code> 会读取该特征的序列作为模板。
+    </div>
+    <div class="callout callout-tip">
+      <strong>提示：</strong>若不想修改 <code>config.py</code>，也可通过 <code>fluor_files</code> 参数传入自定义路径映射。
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 完整示例 -->
+  <!-- ============================================================ -->
+  <section id="examples">
+    <h2>完整使用示例</h2>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(this, 'tab-ex1')">读取 &amp; 查看</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-ex2')">从零创建质粒</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-ex3')">批量 sgRNA</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-ex4')">Round-trip</button>
+    </div>
+
+    <div class="tab-content active" id="tab-ex1">
+      <div class="card">
+        <pre><code><span class="keyword">from</span> snapgene_edit <span class="keyword">import</span> SnapGeneEditor
+
+editor = SnapGeneEditor(<span class="string">r"D:\plasmid\my_plasmid.dna"</span>)
+
+<span class="keyword">print</span>(<span class="string">f"名称: {editor.name}"</span>)
+<span class="keyword">print</span>(<span class="string">f"长度: {editor.length} bp"</span>)
+<span class="keyword">print</span>(<span class="string">f"环状: {editor.is_circular}"</span>)
+<span class="keyword">print</span>(<span class="string">f"特征数: {len(editor.features)}"</span>)
+
+<span class="keyword">for</span> f <span class="keyword">in</span> editor.list_features():
+    <span class="keyword">print</span>(<span class="string">f"  - {f['name']} ({f['type']}) [{f['start']}:{f['end']}]"</span>)</code></pre>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-ex2">
+      <div class="card">
+        <pre><code><span class="keyword">from</span> snapgene_edit <span class="keyword">import</span> SnapGeneEditor
+
+editor = SnapGeneEditor()
+editor.name = <span class="string">"my_plasmid"</span>
+editor.set_sequence(<span class="string">"ATGCGATCGTAGCTAGCTAGCTAGCGCGATCGATCGTACGTAGC"</span>)
+editor.is_circular = <span class="cls">True</span>
+
+<span class="comment"># 添加特征</span>
+editor.add_feature(<span class="string">"GFP"</span>, <span class="num">0</span>, <span class="num">15</span>, feature_type=<span class="string">"CDS"</span>, strand=<span class="num">1</span>, color=<span class="string">"#00FF00"</span>)
+editor.add_feature(<span class="string">"Promoter"</span>, <span class="num">20</span>, <span class="num">35</span>, feature_type=<span class="string">"promoter"</span>, color=<span class="string">"#FF0000"</span>)
+
+<span class="comment"># 编辑序列（特征坐标自动调整）</span>
+editor.insert(<span class="num">15</span>, <span class="string">"AAAA"</span>)
+editor.replace_region(<span class="num">10</span>, <span class="num">14</span>, <span class="string">"GGGG"</span>)
+
+<span class="comment"># 保存</span>
+editor.save(<span class="string">r"D:\plasmid\output.dna"</span>)</code></pre>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-ex3">
+      <div class="card">
+        <pre><code><span class="keyword">from</span> snapgene_edit <span class="keyword">import</span> batch_from_lists_simple
+
+result = batch_from_lists_simple(
+    save_names=[<span class="string">"ZFP001"</span>, <span class="string">"ZFP002"</span>, <span class="string">"ZFP003"</span>, <span class="string">"ZFP004"</span>],
+    new_names=[<span class="string">"sgKlf2-1"</span>, <span class="string">"sgKlf2-2"</span>, <span class="string">"sgKlf2-3"</span>, <span class="string">"sgKlf2-4"</span>],
+    new_seqs=[<span class="string">"FLUOR"</span>, <span class="string">"FLUOR"</span>, <span class="string">"AAAAAAAAAAAAAAAAAAAA"</span>, <span class="string">"TTTTTTTTTTTTTTTTTTTT"</span>],
+    fluor_list=[<span class="string">"A"</span>, <span class="string">"B"</span>, <span class="string">"A"</span>, <span class="string">"A"</span>],
+    output_dir=<span class="string">r"D:\plasmid\temp"</span>,
+)
+<span class="keyword">print</span>(result)</code></pre>
+        <p>输出内容：</p>
+        <pre><code>[ZFP001] A: AAGCCCCATCAACCCATACA -> AAAAAAAAAAAAAAAAAAAA
+[ZFP002] B: AAGCCCCATCAACCCATACA -> TTTTTTTTTTTTTTTTTTTT
+[ZFP003] A: AAGCCCCATCAACCCATACA -> AAAAAAAAAAAAAAAAAAAA
+[ZFP004] A: AAGCCCCATCAACCCATACA -> TTTTTTTTTTTTTTTTTTTT
+要做这些克隆，请你复制这些序列粘贴到 primer list 中
+----------------------------------------
+AAAAAAAAAAAAAAAAAAAA
+TTTTTTTTTTTTTTTTTTTT
+...
+</code></pre>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-ex4">
+      <div class="card">
+        <pre><code><span class="keyword">from</span> snapgene_edit <span class="keyword">import</span> SnapGeneEditor
+<span class="keyword">import</span> tempfile, os
+
+editor = SnapGeneEditor(<span class="string">r"D:\plasmid\original.dna"</span>)
+
+tmp = os.path.join(tempfile.gettempdir(), <span class="string">"rt_test.dna"</span>)
+editor.save(tmp)
+editor2 = SnapGeneEditor(tmp)
+os.remove(tmp)
+
+<span class="keyword">assert</span> editor.sequence == editor2.sequence
+<span class="keyword">assert</span> len(editor.features) == len(editor2.features)
+<span class="keyword">print</span>(<span class="string">"Round-trip 通过"</span>)</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 项目结构 -->
+  <!-- ============================================================ -->
+  <section>
+    <h2>项目结构</h2>
+    <pre><code>snapgene_edit/
+├── pyproject.toml              <span class="comment"># 构建配置</span>
+├── .gitignore                  <span class="comment"># Git 忽略规则</span>
+├── example.py                  <span class="comment"># 使用示例</span>
+├── snapgene_edit/              <span class="comment"># 主包</span>
+│   ├── __init__.py             <span class="comment"># 公开 API</span>
+│   ├── editor.py               <span class="comment"># 核心编辑器 + 批量函数</span>
+│   ├── reader.py               <span class="comment"># .dna 读取</span>
+│   ├── writer.py               <span class="comment"># .dna 写入</span>
+│   ├── models.py               <span class="comment"># 数据模型</span>
+│   ├── config.py               <span class="comment"># 荧光模板路径配置</span>
+│   └── utils.py                <span class="comment"># 序列工具</span>
+└── docs/
+    └── index.html              <span class="comment"># 本教程</span></code></pre>
+  </section>
+
+  <hr style="margin: 48px 0; border: none; border-top: 2px solid #e0e6ed;">
+  <p style="text-align: center; color: #8a9bb5; font-size: 13px;">
+    snapgene_edit v0.1.0 • 纯 Python SnapGene .dna 文件编辑器 • 零外部依赖
+  </p>
+</div>
+
+<script>
+function switchTab(btn, tabId) {
+  const parent = btn.closest('section');
+  parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  parent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+document.querySelectorAll('.sidebar nav a').forEach(a => {
+  a.addEventListener('click', function() {
+    document.querySelector('.sidebar nav a.active')?.classList.remove('active');
+    this.classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>

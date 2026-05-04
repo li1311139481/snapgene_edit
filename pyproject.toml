@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "snapgene_edit"
+version = "0.1.0"
+description = "Read, edit, and write SnapGene .dna files"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Zifeng Li", email = "lizifeng0709@163.com"},
+]
+urls = {Homepage = "https://github.com/li1311139481/snapgene_edit"}
+
+[tool.setuptools.packages.find]
+include = ["snapgene_edit*"]

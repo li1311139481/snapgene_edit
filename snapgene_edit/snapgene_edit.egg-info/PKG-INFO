@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: snapgene_edit
+Version: 0.1.0
+Summary: Read, edit, and write SnapGene .dna files
+Requires-Python: >=3.8

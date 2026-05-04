@@ -1,0 +1,12 @@
+pyproject.toml
+snapgene_edit/__init__.py
+snapgene_edit/config.py
+snapgene_edit/editor.py
+snapgene_edit/models.py
+snapgene_edit/reader.py
+snapgene_edit/utils.py
+snapgene_edit/writer.py
+snapgene_edit.egg-info/PKG-INFO
+snapgene_edit.egg-info/SOURCES.txt
+snapgene_edit.egg-info/dependency_links.txt
+snapgene_edit.egg-info/top_level.txt

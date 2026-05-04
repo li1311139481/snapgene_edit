@@ -45,8 +45,6 @@ pip install path/to/snapgene_edit
 
 ```python
 from snapgene_edit import SnapGeneEditor, batch_from_lists_simple
-
-print("snapgene_edit 安装成功!")
 ```
 
 ---

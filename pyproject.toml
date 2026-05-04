@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "snapgene_edit"
 version = "0.1.0"
 description = "Read, edit, and write SnapGene .dna files"
+readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [

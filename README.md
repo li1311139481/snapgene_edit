@@ -74,11 +74,24 @@ for f in editor.list_features():
 from snapgene_edit import batch_from_lists_simple
 
 batch_from_lists_simple(
-    save_names=["ZFP001", "ZFP002", "ZFP003"],
-    new_names=["sgKlf2-1", "sgKlf2-2", "sgKlf2-3"],
-    new_seqs=["AAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAA", "TTTTTTTTTTTTTTTTTTTT"],
-    fluor_list=["A", "A", "B"],
-    output_dir=r"D:\plasmid\temp",
+    save_names=["ZFP001", "ZFP002", "ZFP003", "ZFP004", "ZFP005", "ZFP006"],
+    new_names=["sgKlf2-1", "sgKlf2-2", "sgKlf2-3", "sgKlf2-4", "sgKlf2-5", "sgKlf2-6"],
+    new_seqs=[
+        "GGGGGGGGGGGGGGGGGGGG",
+        "AAAAAAAAAAAAAAAAAAAA",
+        "TATATATATATATATATATA",
+        "GCGCGCGCGCGCGCGCGCGC",
+        "ACACACACACACACACACAC",
+        "GGGGGGGGGGGGGGGGGGGG",
+    ],
+    fluor_list=["A", "B", "C", "G", "B", "B"],
+    output_dir=r"/cluster/facility/hlhuang/zifeng001/1file/snapgene/",
+    fluor_files={
+        "A": r"/cluster/facility/hlhuang/zifeng001/1file/snapgene/LMA模板.dna",
+        "B": r"/cluster/facility/hlhuang/zifeng001/1file/snapgene/LMB模板.dna",
+        "C": r"/cluster/facility/hlhuang/zifeng001/1file/snapgene/LMC模板.dna",
+        "G": r"/cluster/facility/hlhuang/zifeng001/1file/snapgene/LMG模板.dna",
+    },
 )
 ```
 

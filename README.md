@@ -8,6 +8,7 @@
 [![Python](https://img.shields.io/badge/python-%3E%3D3.8-blue)](#)
 [![License](https://img.shields.io/badge/license-MIT-green)](#)
 
+**目前仅支持相同序列长度的替换和特征更改，主要用于批量生成sgRNA的snapgene图谱，后续版本会陆续支持更多功能**
 </div>
 
 ---
